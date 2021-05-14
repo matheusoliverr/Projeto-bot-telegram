@@ -13,8 +13,11 @@ module.exports = {
         }
         
     },
-    async insertValue(value, type){
+    async insertValue(value, type, dataCount){
         try {
+            if(dataCount != 0) 
+
+            if(value.includes(",") && type != "const" && type != "let") value = value.split(",")
             await User.createData(value, type)
         } catch (error) {
             console.error(error);

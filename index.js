@@ -5,9 +5,12 @@ const optionController = require("./controllers/optionController")
 const questionController = require('./controllers/questionController')
 
 let validator = 0
-let userInsert = false
-let dataType = ""
-let dataText = ""
+    userInsert = false
+    elementCount = false
+    dataType = ""
+    dataText = ""
+    dataCount = 0
+    countage = 0
 
 dotenv.config()
 
@@ -20,7 +23,8 @@ async function botReply(ctx){
 
         const question = await questionController.findQuestion(ctx.message.text, validator)
 
-        await ctx.reply(question.answer)
+        if(question.answer) await ctx.reply(question.answer)
+
 
         if(question.user_insert == false){
             const options = await optionController.findOptions(question.id)
@@ -29,6 +33,7 @@ async function botReply(ctx){
                 ctx.reply(`- ${option}`)
             });
         } else {
+            if(question.element_count == true) elementCount = true
             userInsert = true
             dataType = ctx.message.text
             dataText = question.data_text
@@ -39,23 +44,55 @@ async function botReply(ctx){
         ctx.reply("Desculpe, não reconheci este comando! Por favor verifique se a grafia está correta.")
 
         if(validator != 0) validator = validator - 1
+
+        console.error(error)
     }
     
 }
 
-async function insertData(ctx){
+async function insertData(ctx, dataType, dataNumber){
     try {
-        await questionController.insertValue(ctx.message.text, dataType)
+
+        if(dataNumber != 0 && countage != 0){
+
+            ctx.reply(`- ${dataType} ${countage}:`)
+
+            await questionController.insertValue(ctx.message.text, dataType)
+
+            ctx.reply(`{${ctx.message.text}}`)
+
+            userInsert = true
+
+        } 
+        
+        if(dataNumber == 0){
+
+            await questionController.insertValue(ctx.message.text, dataType)
+
+            userInsert = false
+            validator += 1
+
+
+        }
 
         ctx.reply(dataText)
 
-        validator += 1
-        userInsert = false
+
         dataType = ""
         dataText = ""
+        countage = countage + 1
+
+        if(dataNumber != 0 && countage-1 == Number(dataNumber)){
+            dataNumber = 0
+            countage = 0
+            ctx.reply("Elementos registrados. Qual o próximo passo?")
+        }
+
+
 
     } catch (error) {
-        ctx.reply("Desculpe, não reconheci este comando! Por favor verifique se a grafia está correta.")
+        console.error(error)
+        ctx.reply("Desculpe, não reconheci este comando! Por favor verifique se a grafia está correta.")      
     }
 }
 
@@ -79,14 +116,21 @@ bot.settings((ctx) => {
 bot.on('text', (ctx) => {
     try {
         ctx.message.text = ctx.message.text.toLowerCase()
-        console.log(ctx.message.text)
+
+        if(elementCount == true){
+            dataCount = Number(ctx.message.text)
+            elementCount = false
+        }
+
+
         if(userInsert){
-            return insertData(ctx)
+            return insertData(ctx, dataType, dataCount)
         }
 
         return botReply(ctx)
         
     } catch (error) {
+        console.error(error)
         ctx.reply("Desculpe, não reconheci este comando! Por favor verifique se a grafia está correta.")
     }
 })

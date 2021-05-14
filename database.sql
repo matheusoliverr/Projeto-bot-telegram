@@ -7,7 +7,8 @@ CREATE TABLE "questions" (
   "answer" text,
   "data_text" text,
   "validator" int NOT NULL,
-  "user_insert" boolean NOT NULL
+  "user_insert" boolean NOT NULL,
+  "element_count" boolean
 );
 
 CREATE TABLE "options" (
